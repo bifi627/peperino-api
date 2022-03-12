@@ -1,3 +1,4 @@
+using FirebaseAdmin;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Peperino_Api.Controllers
@@ -12,10 +13,12 @@ namespace Peperino_Api.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly FirebaseApp firebase;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, FirebaseApp firebase)
         {
             _logger = logger;
+            this.firebase = firebase;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
