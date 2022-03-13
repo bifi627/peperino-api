@@ -4,7 +4,7 @@ using Peperino_Api.Models;
 
 namespace Peperino_Api.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly IMongoCollection<User> _usersCollection;
 
@@ -17,28 +17,33 @@ namespace Peperino_Api.Services
             _usersCollection = mongoDatabase.GetCollection<User>(mongoSettings.Value.UsersCollectionName);
         }
 
-        public IEnumerable<User> Get()
+        public IEnumerable<User> GetAll()
         {
             return _usersCollection.Find(_ => true).ToEnumerable();
         }
 
-        public async Task<User?> GetAsync(string id)
+        public Task<User> GetById(string id)
         {
-            return await _usersCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+            return _usersCollection.Find(x => x.Id.ToString() == id).FirstOrDefaultAsync();
         }
-        public async Task CreateAsync(User newBook)
+        public Task CreateAsync(User user)
         {
-            await _usersCollection.InsertOneAsync(newBook);
-        }
-
-        public async Task UpdateAsync(string id, User updatedBook)
-        {
-            await _usersCollection.ReplaceOneAsync(x => x.Id == id, updatedBook);
+            return _usersCollection.InsertOneAsync(user);
         }
 
-        public async Task RemoveAsync(string id)
+        public Task UpdateAsync(string id, User updatedUser)
         {
-            await _usersCollection.DeleteOneAsync(x => x.Id == id);
+           return _usersCollection.ReplaceOneAsync(x => x.Id.ToString() == id, updatedUser);
+        }
+
+        public Task RemoveAsync(string id)
+        {
+            return _usersCollection.DeleteOneAsync(x => x.Id.ToString() == id);
+        }
+
+        public Task<User> GetByExternalId(string externalId)
+        {
+            return _usersCollection.Find(x => x.ExternalId == externalId).FirstOrDefaultAsync();
         }
     }
 }

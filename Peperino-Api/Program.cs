@@ -1,3 +1,4 @@
+using Peperino_Api.Helpers;
 using Peperino_Api.Libs;
 using Peperino_Api.Models;
 using Peperino_Api.Services;
@@ -15,7 +16,9 @@ builder.Services.AddFirebase();
 
 builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
 
-builder.Services.AddSingleton<UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IListService, ListService>();
+
 
 // Initialize the default app
 var app = builder.Build();
@@ -30,6 +33,8 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<JwtMiddleware>();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 
