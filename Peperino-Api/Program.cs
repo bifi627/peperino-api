@@ -1,7 +1,6 @@
-using FirebaseAdmin;
-using FirebaseAdmin.Auth;
-using Google.Apis.Auth.OAuth2;
 using Peperino_Api.Libs;
+using Peperino_Api.Models;
+using Peperino_Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +12,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddFirebase();
+
+builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
+
+builder.Services.AddSingleton<UserService>();
 
 // Initialize the default app
 var app = builder.Build();
