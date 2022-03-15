@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using Peperino_Api.Models;
+using Peperino_Api.Models.User;
 
 namespace Peperino_Api.Services
 {

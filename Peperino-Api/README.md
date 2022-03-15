@@ -5,3 +5,6 @@ heroku login
 heroku container:login
 docker push registry.heroku.com/peperino-api/web
 heroku container:release web --app peperino-api
+
+mapper:
+dotnet msbuild -t:Mapster

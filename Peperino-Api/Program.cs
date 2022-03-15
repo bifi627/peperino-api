@@ -2,6 +2,8 @@ using Peperino_Api.Helpers;
 using Peperino_Api.Libs;
 using Peperino_Api.Models;
 using Peperino_Api.Services;
+using FluentValidation;
+using Peperino_Api.Models.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,7 @@ builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mong
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IListService, ListService>();
 
+builder.Services.AddValidatorsFromAssemblyContaining<UserValidator>(ServiceLifetime.Scoped);
 
 // Initialize the default app
 var app = builder.Build();

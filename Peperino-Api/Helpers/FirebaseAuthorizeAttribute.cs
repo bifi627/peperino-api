@@ -1,18 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Peperino_Api.Models;
+using Peperino_Api.Models.User;
 
 namespace Peperino_Api.Helpers
 {
+
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class FirebaseAuthorizeAttribute : Attribute, IAuthorizationFilter
     {
         private readonly string? routeKeyUserId;
 
         /// <param name="id">Only the user with this id has access to this endpoint.</param>
-        public FirebaseAuthorizeAttribute(string? routeKeyUserId = null)
+        public FirebaseAuthorizeAttribute(string? userIdRouteKey = null)
         {
-            this.routeKeyUserId = routeKeyUserId;
+            this.routeKeyUserId = userIdRouteKey;
         }
 
         private bool CheckUser(User user, AuthorizationFilterContext context)
