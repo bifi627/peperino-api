@@ -1,9 +1,9 @@
+using FluentValidation;
 using Peperino_Api.Helpers;
 using Peperino_Api.Libs;
 using Peperino_Api.Models;
-using Peperino_Api.Services;
-using FluentValidation;
 using Peperino_Api.Models.User;
+using Peperino_Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

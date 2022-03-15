@@ -7,6 +7,6 @@ namespace Peperino_Api.Models.Abstractions
     {   
         public ObjectId Id { get; set; }
         public ObjectId OwnerId { get; set; }
-        public T? Content { get; set; }
+        public T Content { get; set; }
     }
 }

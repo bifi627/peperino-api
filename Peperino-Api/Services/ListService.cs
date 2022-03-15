@@ -3,6 +3,8 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Peperino_Api.Models;
 using Peperino_Api.Models.Abstractions;
+using Peperino_Api.Models.Entity;
+using Peperino_Api.Models.List;
 using Peperino_Api.Models.User;
 
 namespace Peperino_Api.Services

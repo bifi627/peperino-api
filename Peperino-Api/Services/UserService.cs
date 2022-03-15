@@ -47,5 +47,12 @@ namespace Peperino_Api.Services
         {
             return _usersCollection.Find(x => x.ExternalId == externalId).FirstOrDefaultAsync();
         }
+
+        public async Task<bool> Exists(User user)
+        {
+            FilterDefinition<User> filter = Builders<User>.Filter.Eq(u => u.Username, user.Username) | Builders<User>.Filter.Eq(u => u.ExternalId, user.ExternalId);
+            var result = await _usersCollection.Find(filter).FirstOrDefaultAsync();
+            return result is not null;
+        }
     }
 }

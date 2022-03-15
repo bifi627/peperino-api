@@ -43,7 +43,6 @@ namespace Peperino_Api.Helpers
                     {
                         context.Items.Add(USER_CONTEXT, user);
                     }
-
                 }
             }
             catch

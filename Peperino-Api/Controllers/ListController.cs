@@ -1,31 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using Peperino_Api.Helpers;
-using Peperino_Api.Models;
+using Peperino_Api.Models.List;
 using Peperino_Api.Services;
 
 namespace Peperino_Api.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class ListController : UserDependentController
+    public class ListController : PeperinoController
     {
         private readonly IListService itemService;
+        private readonly ListValidator validator;
 
-        public ListController(IListService itemService)
+        public ListController(IListService itemService, ListValidator validator)
         {
             this.itemService = itemService;
+            this.validator = validator;
         }
 
         [HttpGet("{id}")]
         [FirebaseAuthorize]
-        public async Task<ActionResult<List>> Get(string id)
+        public async Task<ActionResult<ListDto>> GetListById(string id)
         {
-            var item = await this.itemService.GetById(GetCurrentUser(), new ObjectId(id));
+            var list = await this.itemService.GetById(this.CurrentUser, new ObjectId(id));
 
-            if (item is not null)
+            if (list is not null)
             {
-                return Ok(item);
+                return Ok(list.AdaptToDto());
             }
 
             return NotFound();
@@ -33,10 +36,23 @@ namespace Peperino_Api.Controllers
 
         [HttpPost]
         [FirebaseAuthorize]
-        public async Task<ActionResult<string>> Post(List item)
+        public async Task<ActionResult<ListDto>> CreateNewList(ListDto list)
         {
-            var id = await this.itemService.Create(GetCurrentUser(), item);
-            return Ok(id);
+            validator.ValidateAndThrow(list);
+
+            var model = list.AdaptToList();
+
+            if (model is not null)
+            {
+                var id = await this.itemService.Create(this.CurrentUser, model);
+
+                if (id is not null)
+                {
+                    return CreatedAtRoute(nameof(GetListById), new { id }, model.AdaptToDto());
+                }
+            }
+
+            return BadRequest();
         }
     }
 }

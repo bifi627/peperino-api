@@ -12,5 +12,6 @@ namespace Peperino_Api.Services
         public Task CreateAsync(User user);
         public Task UpdateAsync(ObjectId id, User updatedUser);
         public Task RemoveAsync(ObjectId id);
+        public Task<bool> Exists(User user);
     }
 }

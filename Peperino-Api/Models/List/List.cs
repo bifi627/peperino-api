@@ -1,5 +1,9 @@
-﻿namespace Peperino_Api.Models
+﻿using Mapster;
+
+namespace Peperino_Api.Models.List
 {
+    [GenerateMapper]
+    [AdaptTwoWays("[name]Dto")]
     public class List
     {
         public string Name { get; set; } = "";

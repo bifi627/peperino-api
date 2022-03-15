@@ -1,7 +1,9 @@
-﻿using MongoDB.Bson;
+﻿using Mapster;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Peperino_Api.Models.Abstractions;
 
-namespace Peperino_Api.Models.Abstractions
+namespace Peperino_Api.Models.Entity
 {
     public class ShareableEntity<T> : OwnableEntity<T>, IShareable<T> where T : class
     {
