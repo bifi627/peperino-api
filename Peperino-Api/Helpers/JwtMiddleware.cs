@@ -37,12 +37,11 @@ namespace Peperino_Api.Helpers
                 {
                     var externalId = result.Uid;
 
+                    var firebaseUser = await FirebaseAuth.GetAuth(firebase).GetUserAsync(externalId);
                     var user = await userService.GetByExternalId(externalId);
 
-                    if (user is not null)
-                    {
-                        context.Items.Add(USER_CONTEXT, user);
-                    }
+                    UserContext userContext = new() { FirebaseUser = firebaseUser, PeperinoUser = user };
+                    context.Items.Add(USER_CONTEXT, userContext);
                 }
             }
             catch

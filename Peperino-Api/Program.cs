@@ -16,11 +16,44 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddFirebase();
 
-builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
+// Add mongodb config
+var mongoSettingsJson = Environment.GetEnvironmentVariable("MONGO_SETTINGS_JSON");
+if (mongoSettingsJson is not null)
+{
+    var mongoSettings = Newtonsoft.Json.JsonConvert.DeserializeObject<MongoSettings>(mongoSettingsJson);
+    builder.Services.Configure<MongoSettings>(settings =>
+    {
+        settings = mongoSettings;
+    });
+}
+else
+{
+    builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
+}
 
+// Add cors
+builder.Services.AddCors(options => options.AddPolicy("DEBUG", policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddCors(options => options.AddPolicy("PROD", policy =>
+{
+    var allowedOrigins = new List<string>();
+    allowedOrigins.Add("https://peperino.vercel.app/");
+    allowedOrigins.Add("https://peperino-bifi627.vercel.app/");
+
+    var allowed = Environment.GetEnvironmentVariable("ORIGINS_JSON");
+    if (allowed is not null)
+    {
+        allowedOrigins.AddRange(Newtonsoft.Json.JsonConvert.DeserializeObject<string[]>(allowed));
+    }
+
+    policy.WithOrigins(allowedOrigins.ToArray());
+    policy.WithHeaders("Authorization");
+}));
+
+// Add services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IListService, ListService>();
 
+// Add validator
 builder.Services.AddValidatorsFromAssemblyContaining<UserValidator>(ServiceLifetime.Scoped);
 
 // Initialize the default app
@@ -31,6 +64,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.UseCors("DEBUG");
+}
+else
+{
+    app.UseCors("PROD");
 }
 
 app.UseAuthorization();
@@ -44,3 +83,4 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 var url = $"http://*:{port}";
 
 app.Run(url);
+

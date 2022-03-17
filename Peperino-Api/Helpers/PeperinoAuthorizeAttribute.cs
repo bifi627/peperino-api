@@ -1,20 +1,32 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Peperino_Api.Models;
 using Peperino_Api.Models.User;
 
 namespace Peperino_Api.Helpers
 {
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public class FirebaseAuthorizeAttribute : Attribute, IAuthorizationFilter
+    public class PeperinoAuthorizeAttribute : Attribute, IAuthorizationFilter
     {
         private readonly string? routeKeyUserId;
 
         /// <param name="id">Only the user with this id has access to this endpoint.</param>
-        public FirebaseAuthorizeAttribute(string? userIdRouteKey = null)
+        public PeperinoAuthorizeAttribute(string? userIdRouteKey = null)
         {
             this.routeKeyUserId = userIdRouteKey;
+        }
+
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            if (!context.HttpContext.Items.TryGetValue(JwtMiddleware.USER_CONTEXT, out var item))
+            {
+                context.Result = new JsonResult(new { message = "Unauthorized" }) { StatusCode = StatusCodes.Status401Unauthorized };
+            }
+
+            if (item is not UserContext user || user.PeperinoUser is not null && !CheckUser(user.PeperinoUser, context))
+            {
+                context.Result = new JsonResult(new { message = "Unauthorized" }) { StatusCode = StatusCodes.Status401Unauthorized };
+            }
         }
 
         private bool CheckUser(User user, AuthorizationFilterContext context)
@@ -28,19 +40,6 @@ namespace Peperino_Api.Helpers
             }
 
             return true;
-        }
-
-        public void OnAuthorization(AuthorizationFilterContext context)
-        {
-            if (!context.HttpContext.Items.TryGetValue(JwtMiddleware.USER_CONTEXT, out var u))
-            {
-                context.Result = new JsonResult(new { message = "Unauthorized" }) { StatusCode = StatusCodes.Status401Unauthorized };
-            }
-
-            if (u is not User user || !CheckUser(user, context))
-            {
-                context.Result = new JsonResult(new { message = "Unauthorized" }) { StatusCode = StatusCodes.Status401Unauthorized };
-            }
         }
     }
 }

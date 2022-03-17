@@ -21,7 +21,7 @@ namespace Peperino_Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [FirebaseAuthorize]
+        [PeperinoAuthorize]
         public async Task<ActionResult<ListDto>> GetListById(string id)
         {
             var list = await this.itemService.GetById(this.CurrentUser, new ObjectId(id));
@@ -35,7 +35,7 @@ namespace Peperino_Api.Controllers
         }
 
         [HttpPost]
-        [FirebaseAuthorize]
+        [PeperinoAuthorize]
         public async Task<ActionResult<ListDto>> CreateNewList(ListDto list)
         {
             validator.ValidateAndThrow(list);

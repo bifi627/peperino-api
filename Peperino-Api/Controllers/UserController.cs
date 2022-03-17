@@ -23,16 +23,16 @@ namespace Peperino_Api.Controllers
         }
 
         [HttpPost]
-        [FirebaseAuthorize]
+        [PeperinoAuthorize] // Cant use this here because there is no user yet...
         public async Task<ActionResult<UserDto>> CreateNewUser(UserDto userDto)
         {
             // Basic input validation
             this.validator.ValidateAndThrow(userDto);
 
             // User can only create self
-            if(userDto.ExternalId != this.CurrentUser.ExternalId)
+            if(userDto.ExternalId != this.FirebaseUser?.Uid)
             {
-                logger.LogError("Given external id ({ExternalId}) does not match the external id from the current user ({ExternalId}): {userDto}", userDto.ExternalId, CurrentUser.ExternalId, userDto.ToJson());
+                logger.LogError("Given external id ({ExternalId}) does not match the external id from the current user ({ExternalId}): {userDto}", userDto.ExternalId, FirebaseUser?.Uid, userDto.ToJson());
                 return this.UnprocessableEntity(userDto);
             }
 
@@ -57,7 +57,7 @@ namespace Peperino_Api.Controllers
         }
 
         [HttpGet("{id}", Name = nameof(GetUserById))]
-        [FirebaseAuthorize("{id}")]
+        [PeperinoAuthorize("{id}")]
         public ActionResult<UserDto> GetUserById(string id)
         {
             var user = this.userService.GetById(new ObjectId(id)).Result;
