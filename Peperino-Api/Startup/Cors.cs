@@ -11,8 +11,8 @@ namespace Peperino_Api.Startup
             {
                 var allowedOrigins = new List<string>
                 {
-                    "https://peperino.vercel.app/",
-                    "https://peperino-bifi627.vercel.app/"
+                    "https://peperino.vercel.app",
+                    "https://peperino-bifi627.vercel.app"
                 };
 
                 Console.WriteLine($"[CORS] Allowed origins direct: {string.Join(", ", allowedOrigins)}");
@@ -28,7 +28,9 @@ namespace Peperino_Api.Startup
                 }
 
                 policy.WithOrigins(allowedOrigins.ToArray());
-                policy.WithHeaders("Authorization");
+                //policy.WithHeaders("Authorization");
+                policy.AllowAnyMethod();
+                policy.AllowAnyHeader();
             }));
 
             return services;
