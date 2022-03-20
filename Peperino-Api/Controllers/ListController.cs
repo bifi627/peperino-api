@@ -24,7 +24,7 @@ namespace Peperino_Api.Controllers
         [PeperinoAuthorize]
         public async Task<ActionResult<ListDto>> GetListById(string id)
         {
-            var list = await this.itemService.GetById(this.CurrentUser, new ObjectId(id));
+            var list = await this.itemService.GetById(this.PeperinoUser, new ObjectId(id));
 
             if (list is not null)
             {
@@ -44,7 +44,7 @@ namespace Peperino_Api.Controllers
 
             if (model is not null)
             {
-                var id = await this.itemService.Create(this.CurrentUser, model);
+                var id = await this.itemService.Create(this.PeperinoUser, model);
 
                 if (id is not null)
                 {

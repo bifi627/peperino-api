@@ -70,5 +70,21 @@ namespace Peperino_Api.Controllers
             logger.LogWarning("id {id} not found", id);
             return NotFound();
         }
+
+        [HttpGet]
+        [PeperinoAuthorize]
+        public ActionResult<UserDto> GetCurrentUser()
+        {
+            if(this.PeperinoUser is not null)
+            {
+                var user = this.PeperinoUser.AdaptToDto();
+                if (user is not null)
+                {
+                    return Ok(user);
+                }
+            }
+
+            return BadRequest();
+        }
     }
 }

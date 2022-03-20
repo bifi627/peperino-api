@@ -7,7 +7,7 @@ namespace Peperino_Api.Controllers
 {
     public abstract class PeperinoController : ControllerBase
     {
-        public User? CurrentUser
+        public User? PeperinoUser
         {
             get
             {
