@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Peperino_Api.Models;
-using Peperino_Api.Models.Abstractions;
 using Peperino_Api.Models.Entity;
 using Peperino_Api.Models.List;
 using Peperino_Api.Models.User;
+using Peperino_Api.Startup;
 
 namespace Peperino_Api.Services
 {

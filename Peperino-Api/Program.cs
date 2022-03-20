@@ -1,7 +1,6 @@
 using FluentValidation;
 using Peperino_Api.Helpers;
-using Peperino_Api.Libs;
-using Peperino_Api.Models;
+using Peperino_Api.Startup;
 using Peperino_Api.Models.User;
 using Peperino_Api.Services;
 
@@ -15,43 +14,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddFirebase();
-
-// Add mongodb config
-var mongoSettingsJson = Environment.GetEnvironmentVariable("MONGO_SETTINGS_JSON");
-if (mongoSettingsJson is not null)
-{
-    var mongoSettings = Newtonsoft.Json.JsonConvert.DeserializeObject<MongoSettings>(mongoSettingsJson);
-    builder.Services.Configure<MongoSettings>(settings =>
-    {
-        settings = mongoSettings;
-    });
-}
-else
-{
-    builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
-}
-
-// Add cors
-builder.Services.AddCors(options => options.AddPolicy("DEBUG", policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
-builder.Services.AddCors(options => options.AddPolicy("PROD", policy =>
-{
-    var allowedOrigins = new List<string>();
-    allowedOrigins.Add("https://peperino.vercel.app/");
-    allowedOrigins.Add("https://peperino-bifi627.vercel.app/");
-
-    var allowed = Environment.GetEnvironmentVariable("ORIGINS_JSON");
-    if (allowed is not null)
-    {
-        allowedOrigins.AddRange(Newtonsoft.Json.JsonConvert.DeserializeObject<string[]>(allowed));
-    }
-
-    policy.WithOrigins(allowedOrigins.ToArray());
-    policy.WithHeaders("Authorization");
-}));
-
-// Add services
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IListService, ListService>();
+builder.Services.AddMongoDb(builder.Configuration);
+builder.Services.AddCustomCors();
+builder.Services.AddPeperinoServices();
 
 // Add validator
 builder.Services.AddValidatorsFromAssemblyContaining<UserValidator>(ServiceLifetime.Scoped);

@@ -1,9 +1,9 @@
 ﻿using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 
-namespace Peperino_Api.Libs
+namespace Peperino_Api.Startup
 {
-    public static class FirebaseHelper
+    public static class Firebase
     {
         public static IServiceCollection AddFirebase(this IServiceCollection services)
         {
@@ -15,11 +15,11 @@ namespace Peperino_Api.Libs
         {
             var firebaseConfig = Environment.GetEnvironmentVariable("FIREBASE_CONFIG");
 
-            Console.WriteLine("Trying to get firebase config from env 'FIREBASE_CONFIG'");
+            Console.WriteLine("[Firebase] Trying to get firebase config from env 'FIREBASE_CONFIG'");
 
             if (firebaseConfig is null)
             {
-                Console.WriteLine("Trying to get firebase config from file 'firebase.json'");
+                Console.WriteLine("[Firebase] Trying to get firebase config from file 'firebase.json'");
                 firebaseConfig = File.ReadAllText("firebase.json");
             }
 
@@ -34,7 +34,12 @@ namespace Peperino_Api.Libs
                     Credential = GoogleCredential.FromJson(firebaseConfig),
                 });
 
-                Console.WriteLine("firebase initialized");
+
+                if(firebase.Options.Credential.UnderlyingCredential is ServiceAccountCredential projectCredential)
+                {
+                    Console.WriteLine($"[Firebase] Firebase initialized: {projectCredential.ProjectId}");
+                }
+
                 return firebase;
             }
         }
