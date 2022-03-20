@@ -17,7 +17,10 @@
 
                 services.Configure<MongoSettings>(settings =>
                 {
-                    settings = mongoSettings;
+                    settings.ConnectionString = mongoSettings.ConnectionString;
+                    settings.DatabaseName = mongoSettings.DatabaseName;
+                    settings.UsersCollectionName = mongoSettings.UsersCollectionName;
+                    settings.ItemsCollectionName = mongoSettings.ItemsCollectionName;
                 });
             }
             else
