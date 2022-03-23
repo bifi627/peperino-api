@@ -1,7 +1,10 @@
-﻿using FluentValidation;
+﻿using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using Peperino_Api.Helpers;
+using Peperino_Api.Models.Request;
 using Peperino_Api.Models.User;
 using Peperino_Api.Services;
 
@@ -23,44 +26,34 @@ namespace Peperino_Api.Controllers
         }
 
         [HttpPost]
-        [PeperinoAuthorize] // Cant use this here because there is no user yet...
-        public async Task<ActionResult<UserDto>> CreateNewUser(UserDto userDto)
+        public async Task<ActionResult<UserDto>> CreateNewUser(CreateUserRequest createUserRequest)
         {
             // Basic input validation
-            this.validator.ValidateAndThrow(userDto);
-
-            // User can only create self
-            if(userDto.ExternalId != this.FirebaseUser?.Uid)
-            {
-                logger.LogError("Given external id ({ExternalId}) does not match the external id from the current user ({ExternalId}): {userDto}", userDto.ExternalId, FirebaseUser?.Uid, userDto.ToJson());
-                return this.UnprocessableEntity(userDto);
-            }
-
-            var model = userDto.AdaptToUser();
+            this.validator.ValidateAndThrow(createUserRequest.User);
+            var model = createUserRequest.User.AdaptToUser();
 
             if (model is not null)
             {
-                // Check if a user with this username or external id already exists
-                var exists = await this.userService.Exists(model);
-
-                if (exists)
+                // Create peperino user
+                try
                 {
-                    logger.LogError("Username or external id is already in use: {model}", model.ToJson());
-                    return this.BadRequest(userDto);
+                    var newUser = await this.userService.CreateNewUser(model, createUserRequest.Email, createUserRequest.Password);
+                    return CreatedAtRoute(nameof(GetUserById), new { newUser.Id }, newUser.AdaptToDto());
                 }
-
-                await this.userService.CreateAsync(model);
-                return CreatedAtRoute(nameof(GetUserById), new { model.Id }, model.AdaptToDto());
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
             }
 
             return BadRequest();
         }
 
-        [HttpGet("{id}", Name = nameof(GetUserById))]
+        [HttpGet("data/{id:length(24)}", Name = nameof(GetUserById))]
         [PeperinoAuthorize("{id}")]
-        public ActionResult<UserDto> GetUserById(string id)
+        public async Task<ActionResult<UserDto>> GetUserById(string id)
         {
-            var user = this.userService.GetById(new ObjectId(id)).Result;
+            var user = await this.userService.GetById(new ObjectId(id));
 
             if (user is not null)
             {
@@ -75,7 +68,7 @@ namespace Peperino_Api.Controllers
         [PeperinoAuthorize]
         public ActionResult<UserDto> GetCurrentUser()
         {
-            if(this.PeperinoUser is not null)
+            if (this.PeperinoUser is not null)
             {
                 var user = this.PeperinoUser.AdaptToDto();
                 if (user is not null)
@@ -85,6 +78,55 @@ namespace Peperino_Api.Controllers
             }
 
             return BadRequest();
+        }
+
+        [HttpGet("data/{username}", Name = nameof(GetUserByUsername))]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<UserDto>> GetUserByUsername(string username)
+        {
+            var user = await this.userService.GetByUsername(username);
+
+            if (user is not null)
+            {
+                return Ok(user.AdaptToDto());
+            }
+
+            logger.LogWarning("username {username} not found", username);
+            return NotFound();
+        }
+
+        [HttpPost("check", Name = nameof(CheckUsername))]
+        public async Task<ActionResult<bool>> CheckUsername([FromBody] string username)
+        {
+            return Ok(await this.userService.CheckUsername(username));
+        }
+
+        [HttpPost("provider", Name = nameof(HandleProviderLogin))]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<UserDto>> HandleProviderLogin(UserDto user)
+        {
+            this.validator.ValidateAndThrow(user);
+            var model = user.AdaptToUser();
+
+            var peperinoUser = await userService.HandleProviderLogin(model);
+
+            return Ok(peperinoUser.AdaptToDto());
+        }
+
+        [HttpDelete("{externalId}")]
+        [PeperinoAuthorize]
+        public async Task<ActionResult> DeleteUser(string externalId, [FromServices] FirebaseApp firebase)
+        {
+            if( this.PeperinoUser?.ExternalId != externalId)
+            {
+                return BadRequest("Can't delete other users ;-)");
+            }
+
+            await FirebaseAuth.GetAuth(firebase).DeleteUserAsync(externalId);
+
+            var peperinoUser = await userService.GetByExternalId(externalId);
+            await userService.RemoveAsync(peperinoUser.Id);
+            return Ok();
         }
     }
 }

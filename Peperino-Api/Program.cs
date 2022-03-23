@@ -2,7 +2,7 @@ using FluentValidation;
 using Peperino_Api.Helpers;
 using Peperino_Api.Startup;
 using Peperino_Api.Models.User;
-using Peperino_Api.Services;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +20,11 @@ builder.Services.AddPeperinoServices();
 
 // Add validator
 builder.Services.AddValidatorsFromAssemblyContaining<UserValidator>(ServiceLifetime.Scoped);
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 // Initialize the default app
 var app = builder.Build();
