@@ -10,5 +10,6 @@ namespace Peperino_Api.Services
     {
         public Task<List?> GetById(User user, ObjectId id);
         public Task<string> Create(User user, List item);
+        public Task<IEnumerable<List>> GetAllForUser(User user);
     }
 }

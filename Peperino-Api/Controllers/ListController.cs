@@ -11,12 +11,12 @@ namespace Peperino_Api.Controllers
     [Route("api/v1/[controller]")]
     public class ListController : PeperinoController
     {
-        private readonly IListService itemService;
+        private readonly IListService listService;
         private readonly ListValidator validator;
 
         public ListController(IListService itemService, ListValidator validator)
         {
-            this.itemService = itemService;
+            this.listService = itemService;
             this.validator = validator;
         }
 
@@ -24,7 +24,7 @@ namespace Peperino_Api.Controllers
         [PeperinoAuthorize]
         public async Task<ActionResult<ListDto>> GetListById(string id)
         {
-            var list = await this.itemService.GetById(this.PeperinoUser, new ObjectId(id));
+            var list = await this.listService.GetById(this.PeperinoUser, new ObjectId(id));
 
             if (list is not null)
             {
@@ -44,7 +44,7 @@ namespace Peperino_Api.Controllers
 
             if (model is not null)
             {
-                var id = await this.itemService.Create(this.PeperinoUser, model);
+                var id = await this.listService.Create(this.PeperinoUser, model);
 
                 if (id is not null)
                 {
@@ -52,6 +52,18 @@ namespace Peperino_Api.Controllers
                 }
             }
 
+            return BadRequest();
+        }
+
+        [HttpGet]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<ListDto[]>> GetLists()
+        {
+            if (this.PeperinoUser is not null)
+            {
+                var lists = await this.listService.GetAllForUser(this.PeperinoUser);
+                return Ok(lists.ToArray());
+            }
             return BadRequest();
         }
     }

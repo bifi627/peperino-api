@@ -10,7 +10,7 @@ namespace Peperino_Api.Services
 {
     public class ListService : IListService
     {
-        private readonly IMongoCollection<ShareableEntity<List>> _itemsCollection;
+        private readonly IMongoCollection<ShareableEntity<List>> _listsCollection;
 
         public ListService(IOptions<MongoSettings> mongoSettings)
         {
@@ -18,12 +18,12 @@ namespace Peperino_Api.Services
 
             var mongoDatabase = mongoClient.GetDatabase(mongoSettings.Value.DatabaseName);
 
-            _itemsCollection = mongoDatabase.GetCollection<ShareableEntity<List>>(mongoSettings.Value.ItemsCollectionName);
+            _listsCollection = mongoDatabase.GetCollection<ShareableEntity<List>>(mongoSettings.Value.ItemsCollectionName);
         }
 
         public async Task<List?> GetById(User user, ObjectId id)
         {
-            var item = await _itemsCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+            var item = await _listsCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
             if (item is not null && (item.OwnerId == user.Id || item.SharedWith.Contains(user.Id)))
             {
@@ -41,9 +41,16 @@ namespace Peperino_Api.Services
                 OwnerId = user.Id,
             };
 
-            await _itemsCollection.InsertOneAsync(ownableItem);
+            await _listsCollection.InsertOneAsync(ownableItem);
 
             return ownableItem.Id.ToString();
+        }
+
+        public async Task<IEnumerable<List>> GetAllForUser(User user)
+        {
+            FilterDefinition<ShareableEntity<List>> filter = Builders<ShareableEntity<List>>.Filter.Eq(item => item.OwnerId, user.Id) | Builders<ShareableEntity<List>>.Filter.AnyEq(item => item.SharedWith, user.Id);
+            var lists = await _listsCollection.FindAsync(filter);
+            return lists.ToEnumerable().Select(s => s.Content);
         }
     }
 }
