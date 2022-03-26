@@ -7,6 +7,7 @@ namespace Peperino_Api.Models.List
     public class List
     {
         public string Name { get; set; } = "";
+        public string Slug { get; set; } = "";
         public List<ListItem> ListItems { get; set; } = new List<ListItem>();
     }
 }

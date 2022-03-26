@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using Peperino_Api.Helpers;
 using Peperino_Api.Models.List;
+using Peperino_Api.Models.Request;
 using Peperino_Api.Services;
 
 namespace Peperino_Api.Controllers
@@ -20,20 +21,6 @@ namespace Peperino_Api.Controllers
             this.validator = validator;
         }
 
-        [HttpGet("{id}")]
-        [PeperinoAuthorize]
-        public async Task<ActionResult<ListDto>> GetListById(string id)
-        {
-            var list = await this.listService.GetById(this.PeperinoUser, new ObjectId(id));
-
-            if (list is not null)
-            {
-                return Ok(list.AdaptToDto());
-            }
-
-            return NotFound();
-        }
-
         [HttpPost]
         [PeperinoAuthorize]
         public async Task<ActionResult<ListDto>> CreateNewList(ListDto list)
@@ -44,11 +31,20 @@ namespace Peperino_Api.Controllers
 
             if (model is not null)
             {
+                var originalSlug = list.Slug;
+                var counter = 1;
+
+                while (!await this.listService.CheckSlugAvailable(model.Slug))
+                {
+                    model.Slug = $"{originalSlug}-{counter}";
+                    counter++;
+                }
+
                 var id = await this.listService.Create(this.PeperinoUser, model);
 
                 if (id is not null)
                 {
-                    return CreatedAtRoute(nameof(GetListById), new { id }, model.AdaptToDto());
+                    return Ok(list);
                 }
             }
 
@@ -62,7 +58,56 @@ namespace Peperino_Api.Controllers
             if (this.PeperinoUser is not null)
             {
                 var lists = await this.listService.GetAllForUser(this.PeperinoUser);
+
                 return Ok(lists.ToArray());
+            }
+            return BadRequest();
+        }
+
+        [HttpGet("{slug}")]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<ListDto>> GetListBySlug(string slug)
+        {
+            if (this.PeperinoUser != null)
+            {
+                var list = await this.listService.GetBySlug(this.PeperinoUser, slug);
+                
+                if (list is not null)
+                {
+                    return Ok(list);
+                }
+
+                return NotFound();
+            }
+            return BadRequest();
+        }
+
+        [HttpPost("{slug}/text")]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<ListItemDto>> AddTextItemToList(string slug, [FromBody] string item)
+        {
+            if(this.PeperinoUser is not null)
+            {
+                var result = await this.listService.AddTextItem(this.PeperinoUser, slug, item);
+
+                if (result is not null)
+                {
+                    return Ok(result.AdaptToDto());
+                }
+
+                return BadRequest("Failed to add item to list");
+            }
+            return BadRequest();
+        }
+
+        [HttpPost("{slug}/check")]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<bool>> CheckItem(string slug, [FromBody] CheckItemRequest request)
+        {
+            if(this.PeperinoUser is not null)
+            {
+                var result = await this.listService.CheckItem(this.PeperinoUser, slug, request.Id, request.Checked);
+                return Ok(result);
             }
             return BadRequest();
         }

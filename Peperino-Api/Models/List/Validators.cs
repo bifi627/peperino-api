@@ -7,6 +7,7 @@ namespace Peperino_Api.Models.List
         public ListValidator()
         {
             RuleFor(list => list.Name).NotEmpty();
+            RuleFor(list => list.Slug).NotNull();
             RuleFor(list => list.ListItems).NotNull();
             RuleForEach(list => list.ListItems).SetValidator(new ListItemValidator());
         }
@@ -17,6 +18,9 @@ namespace Peperino_Api.Models.List
         public ListItemValidator()
         {
             RuleFor(item => item.Text).NotEmpty();
+            RuleFor(item => item.Id).NotEmpty();
+            RuleFor(item => item.Type).NotNull();
+            RuleFor(item => item.Checked).NotNull();
         }
     }
 }

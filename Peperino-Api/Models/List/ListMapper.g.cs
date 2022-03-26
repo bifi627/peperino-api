@@ -10,6 +10,7 @@ namespace Peperino_Api.Models.List
             return p1 == null ? null : new List()
             {
                 Name = p1.Name,
+                Slug = p1.Slug,
                 ListItems = funcMain1(p1.ListItems)
             };
         }
@@ -22,6 +23,7 @@ namespace Peperino_Api.Models.List
             List result = p4 ?? new List();
             
             result.Name = p3.Name;
+            result.Slug = p3.Slug;
             result.ListItems = funcMain2(p3.ListItems, result.ListItems);
             return result;
             
@@ -31,6 +33,7 @@ namespace Peperino_Api.Models.List
             return p7 == null ? null : new ListDto()
             {
                 Name = p7.Name,
+                Slug = p7.Slug,
                 ListItems = funcMain3(p7.ListItems)
             };
         }
@@ -43,6 +46,7 @@ namespace Peperino_Api.Models.List
             ListDto result = p10 ?? new ListDto();
             
             result.Name = p9.Name;
+            result.Slug = p9.Slug;
             result.ListItems = funcMain4(p9.ListItems, result.ListItems);
             return result;
             
@@ -62,7 +66,13 @@ namespace Peperino_Api.Models.List
             while (i < len)
             {
                 ListItemDto item = p2[i];
-                result.Add(item == null ? null : new ListItem() {Text = item.Text});
+                result.Add(item == null ? null : new ListItem()
+                {
+                    Id = item.Id,
+                    Text = item.Text,
+                    Checked = item.Checked,
+                    Type = item.Type
+                });
                 i++;
             }
             return result;
@@ -83,7 +93,13 @@ namespace Peperino_Api.Models.List
             while (i < len)
             {
                 ListItemDto item = p5[i];
-                result.Add(item == null ? null : new ListItem() {Text = item.Text});
+                result.Add(item == null ? null : new ListItem()
+                {
+                    Id = item.Id,
+                    Text = item.Text,
+                    Checked = item.Checked,
+                    Type = item.Type
+                });
                 i++;
             }
             return result;
@@ -104,7 +120,13 @@ namespace Peperino_Api.Models.List
             while (i < len)
             {
                 ListItem item = p8[i];
-                result.Add(item == null ? null : new ListItemDto() {Text = item.Text});
+                result.Add(item == null ? null : new ListItemDto()
+                {
+                    Id = item.Id,
+                    Text = item.Text,
+                    Checked = item.Checked,
+                    Type = item.Type
+                });
                 i++;
             }
             return result;
@@ -125,7 +147,13 @@ namespace Peperino_Api.Models.List
             while (i < len)
             {
                 ListItem item = p11[i];
-                result.Add(item == null ? null : new ListItemDto() {Text = item.Text});
+                result.Add(item == null ? null : new ListItemDto()
+                {
+                    Id = item.Id,
+                    Text = item.Text,
+                    Checked = item.Checked,
+                    Type = item.Type
+                });
                 i++;
             }
             return result;
