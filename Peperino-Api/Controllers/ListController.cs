@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Peperino_Api.Helpers;
 using Peperino_Api.Models.List;
+using Peperino_Api.Models.Request;
 using Peperino_Api.Services;
 
 namespace Peperino_Api.Controllers
@@ -116,6 +117,40 @@ namespace Peperino_Api.Controllers
                     return Ok(result);
                 }
 
+            }
+            return BadRequest();
+        }
+
+        [HttpDelete("{slug}/{itemId}")]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<bool>> DeleteItem(string slug, Guid itemId)
+        {
+            if (this.PeperinoUser is not null)
+            {
+                var result = await this.listService.DeleteItem(PeperinoUser, slug, itemId);
+
+                if (result)
+                {
+                    return Ok(true);
+                }
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost("{slug}/move")]
+        [PeperinoAuthorize]
+        public async Task<ActionResult<ListDto>> MoveItem(string slug, [FromBody] MoveItemRequest request)
+        {
+            if (this.PeperinoUser is not null)
+            {
+                var result = await this.listService.MoveItem(this.PeperinoUser, slug, request.From, request.To);
+
+                if (result is not null)
+                {
+                    var dto = result.AdaptToDto();
+                    return Ok(dto);
+                }
             }
             return BadRequest();
         }

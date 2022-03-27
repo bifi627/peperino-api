@@ -97,9 +97,63 @@ namespace Peperino_Api.Services
             return null;
         }
 
-        public Task<bool> DeleteItem(User user, string slug, Guid id)
+        public async Task<bool> DeleteItem(User user, string slug, Guid id)
         {
-            throw new NotImplementedException();
+            var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug && u.Content.ListItems.Any(i => i.Id == id));
+            var update = Builders<ShareableEntity<List>>.Update.Unset(f => f.Content.ListItems[-1]);
+            var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+            return updateResult.IsAcknowledged;
+        }
+
+        public async Task<List?> MoveItem(User user, string slug, int from, int to)
+        {
+
+            var list = await this.GetBySlug(user, slug);
+
+            if (list is not null)
+            {
+                var array = list.ListItems.ToArray();
+                ShiftElement(array, from, to);
+                var modifiedList = array.ToList();
+
+                var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Eq(u => u.Content.Slug, slug);
+                var update = Builders<ShareableEntity<List>>.Update.Set(f => f.Content.ListItems, modifiedList);
+                var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+
+                if (updateResult.IsAcknowledged)
+                {
+                    list.ListItems = modifiedList;
+                    return list;
+                }
+            }
+
+
+            return null;
+        }
+
+        private static void ShiftElement<T>(T[] array, int oldIndex, int newIndex)
+        {
+            // TODO: Argument validation
+            if (oldIndex == newIndex)
+            {
+                return; // No-op
+            }
+            T tmp = array[oldIndex];
+            if (newIndex < oldIndex)
+            {
+                // Need to move part of the array "up" to make room
+                Array.Copy(array, newIndex, array, newIndex + 1, oldIndex - newIndex);
+            }
+            else
+            {
+                // Need to move part of the array "down" to fill the gap
+                Array.Copy(array, oldIndex + 1, array, oldIndex, newIndex - oldIndex);
+            }
+            array[newIndex] = tmp;
         }
     }
+
+
 }
+
+
