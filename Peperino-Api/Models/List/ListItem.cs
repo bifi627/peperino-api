@@ -10,10 +10,10 @@ namespace Peperino_Api.Models.List
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Text { get; set; } = "";
         public bool Checked { get; set; } = false;
-        [JsonConverter(typeof(JsonStringEnumConverter))]
         public ItemType Type { get; set; } = ItemType.Text;
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ItemType
     {
         Text,

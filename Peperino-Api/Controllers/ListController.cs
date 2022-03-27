@@ -1,9 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using Peperino_Api.Helpers;
 using Peperino_Api.Models.List;
-using Peperino_Api.Models.Request;
 using Peperino_Api.Services;
 
 namespace Peperino_Api.Controllers
@@ -14,11 +12,13 @@ namespace Peperino_Api.Controllers
     {
         private readonly IListService listService;
         private readonly ListValidator validator;
+        private readonly ListItemValidator itemValidator;
 
-        public ListController(IListService itemService, ListValidator validator)
+        public ListController(IListService itemService, ListValidator validator, ListItemValidator itemValidator)
         {
             this.listService = itemService;
             this.validator = validator;
+            this.itemValidator = itemValidator;
         }
 
         [HttpPost]
@@ -71,7 +71,7 @@ namespace Peperino_Api.Controllers
             if (this.PeperinoUser != null)
             {
                 var list = await this.listService.GetBySlug(this.PeperinoUser, slug);
-                
+
                 if (list is not null)
                 {
                     return Ok(list);
@@ -86,7 +86,7 @@ namespace Peperino_Api.Controllers
         [PeperinoAuthorize]
         public async Task<ActionResult<ListItemDto>> AddTextItemToList(string slug, [FromBody] string item)
         {
-            if(this.PeperinoUser is not null)
+            if (this.PeperinoUser is not null)
             {
                 var result = await this.listService.AddTextItem(this.PeperinoUser, slug, item);
 
@@ -100,14 +100,22 @@ namespace Peperino_Api.Controllers
             return BadRequest();
         }
 
-        [HttpPost("{slug}/check")]
+        [HttpPut("{slug}/{itemId}")]
         [PeperinoAuthorize]
-        public async Task<ActionResult<bool>> CheckItem(string slug, [FromBody] CheckItemRequest request)
+        public async Task<ActionResult<bool>> UpdateItem(string slug, string itemId, [FromBody] ListItemDto listItemDto)
         {
-            if(this.PeperinoUser is not null)
+            if (this.PeperinoUser is not null)
             {
-                var result = await this.listService.CheckItem(this.PeperinoUser, slug, request.Id, request.Checked);
-                return Ok(result);
+                itemValidator.ValidateAndThrow(listItemDto);
+
+                var model = listItemDto.AdaptToListItem();
+
+                if (model is not null)
+                {
+                    var result = await this.listService.UpdateItem(this.PeperinoUser, slug, model);
+                    return Ok(result);
+                }
+
             }
             return BadRequest();
         }

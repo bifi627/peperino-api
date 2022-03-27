@@ -73,44 +73,28 @@ namespace Peperino_Api.Services
             return result?.Content;
         }
 
-        public async Task<bool> CheckItem(User user, string slug, Guid itemId, bool @checked)
+        public async Task<bool> UpdateItem(User user, string slug, ListItem listItem)
         {
-            var list = await this.GetBySlug(user, slug);
-
-            if (list is not null)
-            {
-                var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug && u.Content.ListItems.Any(i => i.Id == itemId));
-                var update = Builders<ShareableEntity<List>>.Update.Set(f => f.Content.ListItems[-1].Checked, @checked);
-                var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
-                return updateResult.IsAcknowledged;
-            }
-
-            return false;
+            var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug && u.Content.ListItems.Any(i => i.Id == listItem.Id));
+            var update = Builders<ShareableEntity<List>>.Update.Set(f => f.Content.ListItems[-1], listItem);
+            var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+            return updateResult.IsAcknowledged;
         }
 
         public async Task<ListItem?> AddTextItem(User user, string slug, string item)
         {
-            var list = await this.GetBySlug(user, slug);
+            var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Eq(u => u.Content.Slug, slug);
+            ListItem newListItem = new() { Text = item, Type = ItemType.Text };
+            var update = Builders<ShareableEntity<List>>.Update.Push(f => f.Content.ListItems, newListItem);
 
-            if (list is not null)
+            var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+
+            if (updateResult.IsAcknowledged)
             {
-                var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Eq(u => u.Content.Slug, slug);
-
-                ListItem newListItem = new ListItem() { Text = item };
-                list.ListItems.Add(newListItem);
-
-                var update = Builders<ShareableEntity<List>>.Update.Set(f => f.Content.ListItems, list.ListItems);
-
-                var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
                 return newListItem;
             }
 
             return null;
-        }
-
-        public Task<bool> UpdateItem(User user, string slug, Guid id, string item)
-        {
-            throw new NotImplementedException();
         }
 
         public Task<bool> DeleteItem(User user, string slug, Guid id)
