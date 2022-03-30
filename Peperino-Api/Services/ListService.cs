@@ -99,8 +99,8 @@ namespace Peperino_Api.Services
 
         public async Task<bool> DeleteItem(User user, string slug, Guid id)
         {
-            var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug && u.Content.ListItems.Any(i => i.Id == id));
-            var update = Builders<ShareableEntity<List>>.Update.Unset(f => f.Content.ListItems[-1]);
+            var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug);
+            var update = Builders<ShareableEntity<List>>.Update.PullFilter(f => f.Content.ListItems, listItem => listItem.Id == id);
             var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
             return updateResult.IsAcknowledged;
         }
