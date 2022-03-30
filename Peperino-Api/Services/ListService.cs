@@ -107,14 +107,14 @@ namespace Peperino_Api.Services
 
         public async Task<List?> MoveItem(User user, string slug, int from, int to)
         {
-
             var list = await this.GetBySlug(user, slug);
 
             if (list is not null)
             {
-                var array = list.ListItems.ToArray();
+                var array = list.ListItems.Where(item => !item.Checked).ToArray();
                 ShiftElement(array, from, to);
                 var modifiedList = array.ToList();
+                modifiedList.AddRange(list.ListItems.Where(item => item.Checked));
 
                 var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Eq(u => u.Content.Slug, slug);
                 var update = Builders<ShareableEntity<List>>.Update.Set(f => f.Content.ListItems, modifiedList);
@@ -126,7 +126,6 @@ namespace Peperino_Api.Services
                     return list;
                 }
             }
-
 
             return null;
         }
