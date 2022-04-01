@@ -1,14 +1,16 @@
 using FluentValidation;
-using Peperino_Api.Helpers;
-using Peperino_Api.Startup;
-using Peperino_Api.Models.User;
 using Microsoft.AspNetCore.Mvc;
+using Peperino_Api.Helpers;
+using Peperino_Api.Hubs;
+using Peperino_Api.Models.User;
+using Peperino_Api.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -47,6 +49,12 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseMiddleware<JwtMiddleware>();
+
+app.UseWebSockets();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.MapHub<NotificationHub>("/notification");
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 

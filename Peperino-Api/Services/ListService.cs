@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Peperino_Api.Hubs;
 using Peperino_Api.Models.Entity;
 using Peperino_Api.Models.List;
 using Peperino_Api.Models.User;
@@ -11,19 +13,21 @@ namespace Peperino_Api.Services
     public class ListService : IListService
     {
         private readonly IMongoCollection<ShareableEntity<List>> _listsCollection;
+        private readonly IHubContext<NotificationHub> notificationHub;
 
         private FilterDefinition<ShareableEntity<List>> GetSecurityFilter(User user)
         {
             return Builders<ShareableEntity<List>>.Filter.Eq(item => item.OwnerId, user.Id) | Builders<ShareableEntity<List>>.Filter.AnyEq(item => item.SharedWith, user.Id);
         }
 
-        public ListService(IOptions<MongoSettings> mongoSettings)
+        public ListService(IOptions<MongoSettings> mongoSettings, IHubContext<NotificationHub> notificationHub)
         {
             var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase(mongoSettings.Value.DatabaseName);
 
             _listsCollection = mongoDatabase.GetCollection<ShareableEntity<List>>(mongoSettings.Value.ItemsCollectionName);
+            this.notificationHub = notificationHub;
         }
 
         public async Task<List?> GetById(User user, ObjectId id)
@@ -78,6 +82,11 @@ namespace Peperino_Api.Services
             var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug && u.Content.ListItems.Any(i => i.Id == listItem.Id));
             var update = Builders<ShareableEntity<List>>.Update.Set(f => f.Content.ListItems[-1], listItem);
             var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+
+            var list = await this.GetBySlug(user, slug);
+
+            await notificationHub.Clients.All.SendAsync("list_" + slug);
+
             return updateResult.IsAcknowledged;
         }
 
@@ -88,6 +97,8 @@ namespace Peperino_Api.Services
             var update = Builders<ShareableEntity<List>>.Update.Push(f => f.Content.ListItems, newListItem);
 
             var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+
+            await notificationHub.Clients.All.SendAsync("list_" + slug);
 
             if (updateResult.IsAcknowledged)
             {
@@ -102,6 +113,9 @@ namespace Peperino_Api.Services
             var filter = GetSecurityFilter(user) & Builders<ShareableEntity<List>>.Filter.Where(u => u.Content.Slug == slug);
             var update = Builders<ShareableEntity<List>>.Update.PullFilter(f => f.Content.ListItems, listItem => listItem.Id == id);
             var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
+
+            await notificationHub.Clients.All.SendAsync("list_" + slug);
+
             return updateResult.IsAcknowledged;
         }
 
@@ -122,6 +136,8 @@ namespace Peperino_Api.Services
 
                 if (updateResult.IsAcknowledged)
                 {
+                    await notificationHub.Clients.All.SendAsync("list_" + slug);
+
                     list.ListItems = modifiedList;
                     return list;
                 }
