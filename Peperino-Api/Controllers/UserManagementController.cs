@@ -12,13 +12,13 @@ namespace Peperino_Api.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class UserController : PeperinoController
+    public class UserManagementController : PeperinoController
     {
-        private readonly IUserService userService;
+        private readonly IUserManagementService userService;
         private readonly UserValidator validator;
-        private readonly ILogger<UserController> logger;
+        private readonly ILogger<UserManagementController> logger;
 
-        public UserController(IUserService userService, UserValidator validator, ILogger<UserController> logger)
+        public UserManagementController(IUserManagementService userService, UserValidator validator, ILogger<UserManagementController> logger)
         {
             this.userService = userService;
             this.validator = validator;

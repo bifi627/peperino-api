@@ -18,7 +18,7 @@ namespace Peperino_Api.Helpers
             _next = next;
         }
 
-        public async Task Invoke(HttpContext context, FirebaseApp firebase, IUserService userService)
+        public async Task Invoke(HttpContext context, FirebaseApp firebase, IUserManagementService userService)
         {
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
@@ -30,7 +30,7 @@ namespace Peperino_Api.Helpers
             await _next(context);
         }
 
-        private static async Task AttachUserToContext(HttpContext context, FirebaseApp firebase, string token, IUserService userService)
+        private static async Task AttachUserToContext(HttpContext context, FirebaseApp firebase, string token, IUserManagementService userService)
         {
             try
             {

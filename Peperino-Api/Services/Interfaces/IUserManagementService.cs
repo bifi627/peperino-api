@@ -4,7 +4,7 @@ using Peperino_Api.Models.User;
 
 namespace Peperino_Api.Services
 {
-    public interface IUserService
+    public interface IUserManagementService
     {
         public IEnumerable<User> GetAll();
         public Task<User> GetById(ObjectId id);

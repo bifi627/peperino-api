@@ -7,12 +7,12 @@ using Peperino_Api.Startup;
 
 namespace Peperino_Api.Services
 {
-    public class UserService : IUserService
+    public class UserManagementService : IUserManagementService
     {
         private readonly IMongoCollection<User> _usersCollection;
         private readonly FirebaseApp firebase;
 
-        public UserService(IOptions<MongoSettings> mongoSettings, FirebaseApp firebase)
+        public UserManagementService(IOptions<MongoSettings> mongoSettings, FirebaseApp firebase)
         {
             var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
 
