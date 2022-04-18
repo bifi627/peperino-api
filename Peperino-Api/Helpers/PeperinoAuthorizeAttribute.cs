@@ -4,8 +4,7 @@ using Peperino_Api.Models.User;
 
 namespace Peperino_Api.Helpers
 {
-
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false)]
     public class PeperinoAuthorizeAttribute : Attribute, IAuthorizationFilter
     {
         private readonly string? routeKeyUserId;
@@ -18,7 +17,7 @@ namespace Peperino_Api.Helpers
 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            if (!context.HttpContext.Items.TryGetValue(JwtMiddleware.USER_CONTEXT, out var item))
+            if (!context.HttpContext.Items.TryGetValue(AuthMiddleware.USER_CONTEXT, out var item))
             {
                 context.Result = new JsonResult(new { message = "Unauthorized" }) { StatusCode = StatusCodes.Status401Unauthorized };
             }

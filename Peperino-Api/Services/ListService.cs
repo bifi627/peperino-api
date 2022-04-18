@@ -13,21 +13,21 @@ namespace Peperino_Api.Services
     public class ListService : IListService
     {
         private readonly IMongoCollection<ShareableEntity<List>> _listsCollection;
-        private readonly IHubContext<NotificationHub> notificationHub;
+        private readonly INotificationService notificationService;
 
         private FilterDefinition<ShareableEntity<List>> GetSecurityFilter(User user)
         {
             return Builders<ShareableEntity<List>>.Filter.Eq(item => item.OwnerId, user.Id) | Builders<ShareableEntity<List>>.Filter.AnyEq(item => item.SharedWith, user.Id);
         }
 
-        public ListService(IOptions<MongoSettings> mongoSettings, IHubContext<NotificationHub> notificationHub)
+        public ListService(IOptions<MongoSettings> mongoSettings, INotificationService notificationService)
         {
             var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase(mongoSettings.Value.DatabaseName);
 
             _listsCollection = mongoDatabase.GetCollection<ShareableEntity<List>>(mongoSettings.Value.ItemsCollectionName);
-            this.notificationHub = notificationHub;
+            this.notificationService = notificationService;
         }
 
         public async Task<List?> GetById(User user, ObjectId id)
@@ -85,7 +85,7 @@ namespace Peperino_Api.Services
 
             var list = await this.GetBySlug(user, slug);
 
-            await notificationHub.Clients.All.SendAsync("list_" + slug);
+            await SendUpdateSignal(slug, user);
 
             return updateResult.IsAcknowledged;
         }
@@ -98,10 +98,9 @@ namespace Peperino_Api.Services
 
             var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
 
-            await notificationHub.Clients.All.SendAsync("list_" + slug);
-
             if (updateResult.IsAcknowledged)
             {
+            await SendUpdateSignal(slug, user);
                 return newListItem;
             }
 
@@ -114,7 +113,7 @@ namespace Peperino_Api.Services
             var update = Builders<ShareableEntity<List>>.Update.PullFilter(f => f.Content.ListItems, listItem => listItem.Id == id);
             var updateResult = await _listsCollection.UpdateOneAsync(filter, update);
 
-            await notificationHub.Clients.All.SendAsync("list_" + slug);
+            await SendUpdateSignal(slug, user);
 
             return updateResult.IsAcknowledged;
         }
@@ -126,7 +125,9 @@ namespace Peperino_Api.Services
             if (list is not null)
             {
                 var array = list.ListItems.Where(item => !item.Checked).ToArray();
-                ShiftElement(array, from, to);
+                
+                Extensions.ShiftElement(array, from, to);
+
                 var modifiedList = array.ToList();
                 modifiedList.AddRange(list.ListItems.Where(item => item.Checked));
 
@@ -136,7 +137,7 @@ namespace Peperino_Api.Services
 
                 if (updateResult.IsAcknowledged)
                 {
-                    await notificationHub.Clients.All.SendAsync("list_" + slug);
+                    await SendUpdateSignal(slug, user);
 
                     list.ListItems = modifiedList;
                     return list;
@@ -146,29 +147,11 @@ namespace Peperino_Api.Services
             return null;
         }
 
-        private static void ShiftElement<T>(T[] array, int oldIndex, int newIndex)
+        private Task SendUpdateSignal(string slug, User user)
         {
-            // TODO: Argument validation
-            if (oldIndex == newIndex)
-            {
-                return; // No-op
-            }
-            T tmp = array[oldIndex];
-            if (newIndex < oldIndex)
-            {
-                // Need to move part of the array "up" to make room
-                Array.Copy(array, newIndex, array, newIndex + 1, oldIndex - newIndex);
-            }
-            else
-            {
-                // Need to move part of the array "down" to fill the gap
-                Array.Copy(array, oldIndex + 1, array, oldIndex, newIndex - oldIndex);
-            }
-            array[newIndex] = tmp;
+            return notificationService.SendListUpdatedNotification(slug, user.ExternalId);
         }
     }
-
-
 }
 
 

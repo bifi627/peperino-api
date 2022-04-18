@@ -27,7 +27,7 @@ namespace Peperino_Api.Controllers
         {
             get
             {
-                if (this.HttpContext.Items.TryGetValue(JwtMiddleware.USER_CONTEXT, out var item) && item is UserContext userContext)
+                if (this.HttpContext.Items.TryGetValue(AuthMiddleware.USER_CONTEXT, out var item) && item is UserContext userContext)
                 {
                     return userContext;
                 }

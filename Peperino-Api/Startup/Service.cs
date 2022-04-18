@@ -11,6 +11,10 @@ namespace Peperino_Api.Startup
 
             Console.WriteLine($"[Service] Adding service {nameof(ListService)}");
             services.AddScoped<IListService, ListService>();
+
+            Console.WriteLine($"[Service] Adding service {nameof(NotificationService)}");
+            services.AddScoped<INotificationService, NotificationService>();
+
             return services;
         }
     }

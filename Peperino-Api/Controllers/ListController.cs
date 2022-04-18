@@ -30,10 +30,12 @@ namespace Peperino_Api.Controllers
 
             var model = list.AdaptToList();
 
-            if (model is not null)
+            if (model is not null && this.PeperinoUser is not null)
             {
                 var originalSlug = list.Slug;
                 var counter = 1;
+
+                // TODO: Should probably just append a guid
 
                 while (!await this.listService.CheckSlugAvailable(model.Slug))
                 {
