@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Peperino_Api.Hubs;
 using Peperino_Api.Models.Entity;
 using Peperino_Api.Models.List;
 using Peperino_Api.Models.User;
@@ -13,6 +11,7 @@ namespace Peperino_Api.Services
     public class ListService : IListService
     {
         private readonly IMongoCollection<ShareableEntity<List>> _listsCollection;
+        private readonly IUserManagementService userManagementService;
         private readonly INotificationService notificationService;
 
         private FilterDefinition<ShareableEntity<List>> GetSecurityFilter(User user)
@@ -20,13 +19,15 @@ namespace Peperino_Api.Services
             return Builders<ShareableEntity<List>>.Filter.Eq(item => item.OwnerId, user.Id) | Builders<ShareableEntity<List>>.Filter.AnyEq(item => item.SharedWith, user.Id);
         }
 
-        public ListService(IOptions<MongoSettings> mongoSettings, INotificationService notificationService)
+        public ListService(IOptions<MongoSettings> mongoSettings, IUserManagementService userManagementService, INotificationService notificationService)
         {
             var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
 
             var mongoDatabase = mongoClient.GetDatabase(mongoSettings.Value.DatabaseName);
 
             _listsCollection = mongoDatabase.GetCollection<ShareableEntity<List>>(mongoSettings.Value.ItemsCollectionName);
+
+            this.userManagementService = userManagementService;
             this.notificationService = notificationService;
         }
 
@@ -36,6 +37,7 @@ namespace Peperino_Api.Services
 
             if (item is not null && (item.OwnerId == user.Id || item.SharedWith.Contains(user.Id)))
             {
+                await ResolveMetaData(item);
                 return item.Content;
             }
 
@@ -58,8 +60,15 @@ namespace Peperino_Api.Services
         public async Task<IEnumerable<List>> GetAllForUser(User user)
         {
             var filter = GetSecurityFilter(user);
-            var lists = await _listsCollection.FindAsync(filter);
-            return lists.ToEnumerable().Select(s => s.Content);
+            var colleciton = await _listsCollection.FindAsync(filter);
+            var lists = colleciton.ToList();
+
+            lists.ForEach(async list =>
+            {
+                await ResolveMetaData(list);
+            });
+
+            return lists.Select(item => item.Content);
         }
 
         public async Task<bool> CheckSlugAvailable(string slug)
@@ -74,6 +83,7 @@ namespace Peperino_Api.Services
             var securityFilter = GetSecurityFilter(user);
             var filter = securityFilter & Builders<ShareableEntity<List>>.Filter.Eq(u => u.Content.Slug, slug);
             var result = await _listsCollection.Find(filter).FirstOrDefaultAsync();
+            await ResolveMetaData(result);
             return result?.Content;
         }
 
@@ -100,7 +110,7 @@ namespace Peperino_Api.Services
 
             if (updateResult.IsAcknowledged)
             {
-            await SendUpdateSignal(slug, user);
+                await SendUpdateSignal(slug, user);
                 return newListItem;
             }
 
@@ -125,7 +135,7 @@ namespace Peperino_Api.Services
             if (list is not null)
             {
                 var array = list.ListItems.Where(item => !item.Checked).ToArray();
-                
+
                 Extensions.ShiftElement(array, from, to);
 
                 var modifiedList = array.ToList();
@@ -150,6 +160,14 @@ namespace Peperino_Api.Services
         private Task SendUpdateSignal(string slug, User user)
         {
             return notificationService.SendListUpdatedNotification(slug, user.ExternalId);
+        }
+
+        private async Task<OwnableEntity<List>> ResolveMetaData(OwnableEntity<List> ownableList)
+        {
+            var owner = await this.userManagementService.GetById(ownableList.OwnerId);
+            ownableList.Content.OwnerName = owner.Username;
+            ownableList.Content.Created = ownableList.Id.CreationTime;
+            return ownableList;
         }
     }
 }

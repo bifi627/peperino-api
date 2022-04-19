@@ -11,6 +11,9 @@ namespace Peperino_Api.Models.List
             {
                 Name = p1.Name,
                 Slug = p1.Slug,
+                Description = p1.Description,
+                Created = p1.Created,
+                OwnerName = p1.OwnerName,
                 ListItems = funcMain1(p1.ListItems)
             };
         }
@@ -24,6 +27,9 @@ namespace Peperino_Api.Models.List
             
             result.Name = p3.Name;
             result.Slug = p3.Slug;
+            result.Description = p3.Description;
+            result.Created = p3.Created;
+            result.OwnerName = p3.OwnerName;
             result.ListItems = funcMain2(p3.ListItems, result.ListItems);
             return result;
             
@@ -34,6 +40,9 @@ namespace Peperino_Api.Models.List
             {
                 Name = p7.Name,
                 Slug = p7.Slug,
+                Description = p7.Description,
+                Created = p7.Created,
+                OwnerName = p7.OwnerName,
                 ListItems = funcMain3(p7.ListItems)
             };
         }
@@ -47,6 +56,9 @@ namespace Peperino_Api.Models.List
             
             result.Name = p9.Name;
             result.Slug = p9.Slug;
+            result.Description = p9.Description;
+            result.Created = p9.Created;
+            result.OwnerName = p9.OwnerName;
             result.ListItems = funcMain4(p9.ListItems, result.ListItems);
             return result;
             
